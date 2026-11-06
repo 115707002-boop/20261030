@@ -1,12 +1,16 @@
-# Firebase & LINE login setup
+# Sign-in setup: Firebase + LINE LIFF
 
-## Firebase project
-Project: `daymark-20261030-ncu` (Spark plan), web app nickname: `Daymark Web`.
+- Google uses Firebase Authentication and provides the Firebase UID.
+- LINE uses LIFF SDK and provides the LINE user profile and LIFF login status.
+- Current Firebase project: `daymark-20261030-ncu`; current Firebase Web app: `Daymark Web`.
 
-## LINE Login
-1. In LINE Developers, create a LINE Login channel and configure the callback URL as `https://<your-auth-domain>/__/auth/handler` (use the Firebase `authDomain` value).
-2. Copy the LINE Channel ID and Channel Secret from the LINE Developers console.
-3. Firebase Authentication does **not** offer LINE as a native provider. Its OpenID Connect (OIDC) provider is only available after upgrading to Firebase Authentication with Identity Platform. Do not paste the LINE channel secret into the static site. Use a trusted backend/Identity Platform integration to exchange and verify tokens.
-4. When an OIDC provider/backend is configured, add `115707002-boop.github.io` as an authorized domain and wire that provider into the sign-in UI.
+## Configure LINE
+1. Create a LINE Login channel in LINE Developers and a LIFF app in that channel.
+2. Set the LIFF Endpoint URL to `https://115707002-boop.github.io/20261030/` and enable the profile scope.
+3. Copy the LIFF ID and replace `YOUR_LINE_LIFF_ID` in `index.html`.
+4. Add the same endpoint to the channel's allowed callback/login URL settings if requested by LINE.
+5. Deploy `index.html` to GitHub Pages, then test login from the HTTPS Pages URL, not from a `file://` URL.
 
-The page gates its dashboard until Firebase confirms an authenticated user. This static-site gate alone does not protect public repository contents or provide server-side authorization; do not store confidential data here.
+The LINE button calls LIFF `init`, starts LINE login, and retrieves the LIFF profile when logged in. It deliberately does **not** treat a LINE profile as a Firebase user. The dashboard remains gated on Firebase Auth; to provide one shared account/UID for both providers, implement a trusted backend that verifies the LINE ID token and mints a Firebase custom token, or configure an appropriate Firebase Identity Platform OIDC provider. Do not put a LINE Channel Secret in the static HTML or GitHub.
+
+Firebase config is public Web app configuration; it is not an authorization secret. Static-site UI gating does not protect public repository contents or private data. Enforce access on a trusted backend/database before storing sensitive user data.
