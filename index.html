@@ -118,7 +118,8 @@
           showError(`LINE 登入尚未設定：${error.message}`);
         }
       });
-    }    signInButton.addEventListener('click', async () => {
+    }
+    signInButton.addEventListener('click', async () => {
       signInButton.disabled = true;
       errorBox.hidden = true;
       loading.hidden = false;
