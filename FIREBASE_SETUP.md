@@ -1,8 +1,12 @@
-# Firebase Google sign-in
+# Firebase & LINE login setup
 
-1. Open the project in Firebase Console, add a Web app, and copy the app settings into the `config` object in `index.html` (replace the four `YOUR_...` placeholders).
-2. Go to **Authentication → Sign-in method** and enable **Google**.
-3. Under **Authentication → Settings → Authorized domains**, add `115707002-boop.github.io`.
-4. Commit and push `index.html` to `main`; GitHub Pages will redeploy. The dashboard is hidden unless Firebase confirms a signed-in user.
+## Firebase project
+Project: `daymark-20261030-ncu` (Spark plan), web app nickname: `Daymark Web`.
 
-This is a static-site sign-in gate, not server-side access control. The repository and static HTML are public; do not store confidential data here. Existing task data remains in browser localStorage. To protect data, use a trusted backend and enforce Firebase token verification/database security rules.
+## LINE Login
+1. In LINE Developers, create a LINE Login channel and configure the callback URL as `https://<your-auth-domain>/__/auth/handler` (use the Firebase `authDomain` value).
+2. Copy the LINE Channel ID and Channel Secret from the LINE Developers console.
+3. Firebase Authentication does **not** offer LINE as a native provider. Its OpenID Connect (OIDC) provider is only available after upgrading to Firebase Authentication with Identity Platform. Do not paste the LINE channel secret into the static site. Use a trusted backend/Identity Platform integration to exchange and verify tokens.
+4. When an OIDC provider/backend is configured, add `115707002-boop.github.io` as an authorized domain and wire that provider into the sign-in UI.
+
+The page gates its dashboard until Firebase confirms an authenticated user. This static-site gate alone does not protect public repository contents or provide server-side authorization; do not store confidential data here.
