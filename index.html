@@ -11,10 +11,24 @@
     @media(max-width:1000px){.app{grid-template-columns:205px 1fr}.main{padding:28px 28px 45px}.content-grid{grid-template-columns:1fr}.right-col{display:grid;grid-template-columns:1fr 1fr;gap:14px}.right-col .panel+.panel{margin-top:0}}
     @media(max-width:680px){.app{display:block}.sidebar{position:fixed;z-index:5;left:-245px;width:230px;transition:left .25s;box-shadow:8px 0 30px #1c2c2010}.sidebar.open{left:0}.mobile-menu{display:inline-grid}.main{padding:19px 16px 40px}.topbar{margin-bottom:23px}.date-label{display:none}.intro{align-items:flex-start;gap:12px}.intro .primary{white-space:nowrap;padding:10px 12px;font-size:11px}h1{font-size:25px}.sub{font-size:11px}.summary-grid{gap:8px}.summary{padding:12px 9px;gap:8px}.summary-icon{width:31px;height:31px;border-radius:9px;font-size:14px}.summary small{font-size:9px}.summary strong{font-size:17px}.summary .hint{display:none}.content-grid{gap:13px}.panel{border-radius:15px}.panel-head{padding:17px 16px 13px}.recommend{margin:0 15px 10px;padding:11px}.task-list{padding:0 15px 12px}.task{gap:8px}.task-name{font-size:11px}.task-meta{gap:6px;font-size:9px}.tag{font-size:8px;padding:4px 5px}.schedule-body{padding:0 15px 16px}.right-col{grid-template-columns:1fr}.right-col .panel+.panel{margin-top:0}.form-row{gap:8px}}
     .privacy-note{margin:18px 2px 0;color:var(--muted);font-size:11px;line-height:1.6}
+    [hidden]{display:none!important}.auth-shell{min-height:100vh;display:grid;place-items:center;padding:24px;background:linear-gradient(135deg,#f5f5f1,#e7f0e9)}.auth-card{width:min(420px,100%);padding:38px 34px;background:#fff;border:1px solid var(--line);border-radius:24px;box-shadow:0 22px 70px #17231b18;text-align:center}.auth-card .brand-icon{width:48px;height:48px;margin:0 auto 18px;font-size:23px}.auth-card h1{font-size:25px;letter-spacing:-.5px}.auth-card p{color:var(--muted);line-height:1.7;margin:10px 0 22px}.auth-actions{display:grid;gap:12px}.google-button-host{display:flex;justify-content:center;min-height:44px}.line-login{width:100%;border:0;border-radius:10px;background:#06c755;color:#fff;padding:13px 16px;font-weight:600}.line-login:hover{background:#05b64d}.auth-status{font-size:12px!important;margin:18px 0 0!important}.auth-status.error{color:#b3261e}.profile{gap:9px}.sign-out{margin-left:auto}
+    .provider-pending{color:var(--muted);font-size:12px;padding:12px}
   </style>
 </head>
 <body>
-<div class="app">
+<section class="auth-shell" id="authGate">
+  <div class="auth-card">
+    <div class="brand-icon">◷</div>
+    <h1>歡迎使用日序 Daymark</h1>
+    <p>登入後管理今天的行程與任務。登入資訊只用於辨識目前使用者，行程仍保存在本機瀏覽器。</p>
+    <div class="auth-actions">
+      <div class="google-button-host" id="googleButtonHost"></div>
+      <button class="line-login" id="lineSignIn" type="button">使用 LINE 登入</button>
+    </div>
+    <p class="auth-status" id="authStatus" role="status">請先在程式設定 Google OAuth Client ID 與 LINE LIFF ID。</p>
+  </div>
+</section>
+<div class="app" id="daymarkApp" hidden>
   <aside class="sidebar" id="sidebar">
     <div class="brand"><div class="brand-icon">◷</div><div><strong>日序 Daymark</strong><small>MAKE TODAY COUNT</small></div></div>
     <div class="nav-label">工作空間</div>
@@ -24,7 +38,7 @@
       <button data-view="schedule"><span class="nav-icon">▤</span>行程安排</button>
     </nav>
     <div class="week-card"><div class="week-title">本週一覽</div><div class="week-days" id="weekDays"></div></div>
-    <div class="side-bottom"><div class="profile"><div class="avatar">林</div><div><strong>我的專注空間</strong><small>個人工作區</small></div></div></div>
+    <div class="side-bottom"><div class="profile"><div class="avatar" id="userAvatar">你</div><div><strong id="userName">我的專注空間</strong><small id="userProvider">個人工作區</small></div><button class="text-btn sign-out" id="signOutBtn" type="button">登出</button></div></div>
   </aside>
   <main class="main">
     <div class="topbar"><div style="display:flex;align-items:center;gap:11px"><button class="icon-btn mobile-menu" id="menuBtn" aria-label="開啟選單">☰</button><div class="breadcrumb">工作空間　/　<span id="crumb">今日總覽</span></div></div><div class="top-actions"><span class="date-label" id="topDate"></span><button class="icon-btn" id="notifyBtn" aria-label="提醒設定">♧<i class="dot"></i></button></div></div>
@@ -52,9 +66,22 @@
 </div>
 <div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div class="modal"><div class="modal-head"><h2 id="modalTitle">新增項目</h2><button class="close" id="closeModal" aria-label="關閉">×</button></div><form class="form" id="itemForm"><div class="field"><label>項目類型</label><div class="type-switch"><button type="button" class="selected" data-type="task">☷　彈性待辦</button><button type="button" data-type="event">◷　固定行程</button></div></div><div class="field"><label for="itemName">名稱</label><input id="itemName" required maxlength="60" placeholder="例如：完成提案初稿" /></div><div class="field"><label for="itemNote">備註（選填）</label><textarea id="itemNote" maxlength="180" placeholder="補充地點、細節或相關資訊"></textarea></div><div class="form-row"><div class="field" id="priorityField"><label for="itemPriority">重要性</label><select id="itemPriority"><option value="high">高</option><option value="medium" selected>中</option><option value="low">低</option></select></div><div class="field" id="dateField"><label for="itemDate">日期</label><input id="itemDate" type="date" required /></div></div><div class="form-row"><div class="field" id="deadlineField"><label for="itemDeadline">截止時間</label><input id="itemDeadline" type="time" value="17:00" /></div><div class="field" id="eventEndField" style="display:none"><label for="itemEnd">結束時間</label><input id="itemEnd" type="time" value="10:00" /></div><div class="field" id="eventTimeField" style="display:none"><label for="itemTime">開始時間</label><input id="itemTime" type="time" value="09:00" /></div></div><div class="field" id="locationField" style="display:none"><label for="itemLocation">地點（選填）</label><input id="itemLocation" maxlength="60" placeholder="例如：線上會議 / 會議室 A" /></div><div class="modal-foot"><button class="secondary" type="button" id="cancelModal">取消</button><button class="primary" type="submit">儲存項目</button></div></form></div></div>
 <div class="toast" id="toast"></div>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script>
 (()=>{
   const $=s=>document.querySelector(s), $$=s=>document.querySelectorAll(s);
+  const GOOGLE_CLIENT_ID='YOUR_GOOGLE_OAUTH_CLIENT_ID';
+  const LINE_LIFF_ID='YOUR_LINE_LIFF_ID';
+  const authGate=$('#authGate'), appShell=$('#daymarkApp'), authStatus=$('#authStatus');
+  const setAuthStatus=(message,isError=false)=>{authStatus.textContent=message;authStatus.classList.toggle('error',isError)};
+  let signedInUser=null, lineReady=false, googleReady=false;
+  function enterWorkspace(user){signedInUser=user;$('#userName').textContent=user.name||'已登入';$('#userProvider').textContent=user.provider==='google'?'Google 帳戶':'LINE 帳戶';$('#userAvatar').textContent=(user.name||user.email||'你').trim().charAt(0).toUpperCase();const accountKey=`daymark-items-v1:${user.provider}:${user.id}`;try{data=JSON.parse(localStorage.getItem(accountKey))||seed;storageKey=accountKey}catch{data=seed;storageKey=accountKey}authGate.hidden=true;appShell.hidden=false;render()}
+  function leaveWorkspace(){if(signedInUser?.provider==='line'&&lineReady&&liff.isLoggedIn())liff.logout();if(signedInUser?.provider==='google'&&googleReady)google.accounts.id.disableAutoSelect();signedInUser=null;appShell.hidden=true;authGate.hidden=false;setAuthStatus('已登出。再次登入即可開啟你的本機行程。')}
+  function decodeGoogleCredential(credential){try{const part=credential.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');return JSON.parse(decodeURIComponent(Array.from(atob(part),c=>'%'+c.charCodeAt(0).toString(16).padStart(2,'0')).join('')))}catch{return null}}
+  function setupGoogle(){if(!GOOGLE_CLIENT_ID||GOOGLE_CLIENT_ID.startsWith('YOUR_')){$('#googleButtonHost').innerHTML='<span class="provider-pending">Google 登入尚未設定 Client ID</span>';return}setAuthStatus('正在載入 Google 登入…');const timer=setInterval(()=>{if(window.google?.accounts?.id){clearInterval(timer);google.accounts.id.initialize({client_id:GOOGLE_CLIENT_ID,callback:response=>{const profile=decodeGoogleCredential(response.credential);if(!profile?.sub){setAuthStatus('無法讀取 Google 登入資訊，請再試一次。',true);return}enterWorkspace({provider:'google',id:profile.sub,name:profile.name,email:profile.email})}});const width=Math.min(320,Math.floor($('#googleButtonHost').clientWidth));google.accounts.id.renderButton($('#googleButtonHost'),{theme:'outline',size:'large',shape:'rectangular',width,text:'signin_with',locale:'zh-TW'});googleReady=true;setAuthStatus('可使用 Google 或 LINE 帳戶登入。')}},100);setTimeout(()=>{clearInterval(timer);if(!googleReady)setAuthStatus('Google 登入元件載入逾時，請確認網路或 OAuth Client ID。',true)},10000)}
+  async function signInWithLine(){if(!LINE_LIFF_ID||LINE_LIFF_ID.startsWith('YOUR_')){setAuthStatus('請先設定 LINE LIFF ID，再啟用 LINE 登入。',true);return}try{if(!window.liff)throw new Error('LIFF SDK 載入失敗，請確認網路連線。');if(!lineReady){await liff.init({liffId:LINE_LIFF_ID});lineReady=true}if(!liff.isLoggedIn()){liff.login({redirectUri:window.location.href});return}const profile=await liff.getProfile();enterWorkspace({provider:'line',id:profile.userId,name:profile.displayName})}catch(error){setAuthStatus(`LINE 登入失敗：${error.message}`,true)}}
+  $('#lineSignIn').addEventListener('click',signInWithLine);$('#signOutBtn').addEventListener('click',leaveWorkspace);setupGoogle();
   const pad=n=>String(n).padStart(2,'0');
   const dateKey=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
   const today=new Date(); today.setHours(0,0,0,0); const todayKey=dateKey(today);
@@ -70,9 +97,9 @@
     {id:'e3',type:'event',name:'專注工作時段',note:'關閉通知，完成提案',date:todayKey,time:'14:00',end:'15:30',location:'',created:7},
     {id:'e4',type:'event',name:'牙醫回診',note:'',date:dateOffset(1),time:'16:30',end:'17:00',location:'',created:8}
   ];
-  let data;try{data=JSON.parse(localStorage.getItem('daymark-items-v1'))||seed}catch{data=seed}
+  let data=seed, storageKey='daymark-items-v1:guest';
   let selectedType='task', currentView='today', manualOrder=false, nextId=Date.now();
-  function save(){localStorage.setItem('daymark-items-v1',JSON.stringify(data));render()}
+  function save(){if(signedInUser)localStorage.setItem(storageKey,JSON.stringify(data));render()}
   function urgency(a){let p={high:3,medium:2,low:1}[a.priority]||1;let due=new Date(`${a.date}T${a.deadline||'23:59'}`);let hrs=(due-Date.now())/36e5;let dueScore=hrs<0?4:hrs<6?3:hrs<24?2.5:hrs<48?1.5:.5;return p*1.2+dueScore}
   function renderWeek(){let now=new Date(),day=(now.getDay()+6)%7,monday=new Date(now);monday.setDate(now.getDate()-day);let names=['一','二','三','四','五','六','日'];$('#weekDays').innerHTML=names.map((n,i)=>{let d=new Date(monday);d.setDate(monday.getDate()+i);return `<span class="${dateKey(d)===todayKey?'today':''}">${n}<b>${d.getDate()}</b></span>`}).join('')}
   function render(){renderWeek();let tasks=data.filter(x=>x.type==='task'),events=data.filter(x=>x.type==='event'),todayTasks=tasks.filter(x=>x.date===todayKey),openToday=todayTasks.filter(x=>!x.done),doneToday=todayTasks.filter(x=>x.done),todayEvents=events.filter(x=>x.date===todayKey).sort((a,b)=>a.time.localeCompare(b.time));
@@ -99,7 +126,6 @@
   $$('.nav button').forEach(b=>b.onclick=()=>{currentView=b.dataset.view;$$('.nav button').forEach(x=>x.classList.toggle('active',x===b));$('#crumb').textContent=b.textContent.trim().replace(/\d+$/,'');$('#schedulePanel').style.display=currentView==='tasks'?'none':'';render();$('#sidebar').classList.remove('open')});
   $('#menuBtn').onclick=()=>$('#sidebar').classList.toggle('open');$('#notifyBtn').onclick=()=>toast('提醒設定可在後續版本加入');
   document.addEventListener('keydown',e=>{if(e.key==='Escape')$('#modalBackdrop').classList.remove('show');if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='n'){e.preventDefault();openModal('task')}});
-  render();
 })();
 </script>
 </body>
